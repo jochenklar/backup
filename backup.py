@@ -3,11 +3,28 @@
 This script simplifies backups of directories using rdiff-backup. It is also able
 to trigger database dumps for mysql and postgres.
 
-prereqesites: linux :)
+Prereqesites: linux :)
               python 2.x
               rdiff-backup
               mysqldump (optional, for mysql)
               pg_dump (optional, for postgres)
+
+Usage:        ./backup.py [OPTIONSFILE]
+
+Destination host, databases, and directories need to be specified in a seperate 
+OPTIONSFILE. The default name for this file is options.json, but it can be specified 
+via the first command line argument. See options.sample.json for a template. 
+
+For the destination, the hostname (host), the system user wich should be used (user),
+and the path on the host machine (host) needs to be provided.
+
+For the databases, the name of the database (dbname), the database user (user), and
+the password of this user (password) needs to be provided.
+
+For the directory, a identifier (name), which will be the name of the directory on 
+the destination host, the absolute path to the directory (path), and optional 
+directories (exclude), inside the directory, with a relative path, which should be 
+excluded by rdiff-backup needs to be provided.
 
 (c) Jochen S. Klar, September 2013
 '''
