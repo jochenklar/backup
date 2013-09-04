@@ -1,0 +1,30 @@
+{
+    "databases": {
+        "mysql": [
+            {
+                "dbname": "",
+                "user": "",
+                "password": ""
+            }
+        ],
+        "postgres": [
+            {
+                "dbname": "",
+                "user": "",
+                "password": ""
+            }
+        ]
+    },
+    "directories": [
+        {
+             "name": "",
+             "path": "",
+             "exclude": []
+        }
+    ],
+    "destination": {
+        "host": "",
+        "user": "",
+        "path": ""
+    }
+}

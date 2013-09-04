@@ -11,67 +11,53 @@ prereqesites: linux :)
 
 (c) Jochen S. Klar, September 2013
 '''
-# main options to be edited
-options = {
-    'databases': {
-        'mysql': [
-            {
-                'dbname': '',
-                'user': '',
-                'password': '',
-            }
-        ],
-        'postgres': [
-            {
-                'dbname': '',
-                'user': '',
-                'password': '',
-            }
-        ]
-    },
-    'directories': [
-        {
-             'name': '',
-             'path': '',
-             'exclude': []
-        },
-    ],
-    'destination': {
-        'host': '',
-        'user': '',
-        'path': ''
-    }
-}
-
-# the rdiff-backup executable
+# the executable
 rdiff     = 'rdiff-backup'
 mysqldump = 'mysqldump'
 pg_dump   = 'pg_dump'
 
 # include some common python modules
-import os,sys,datetime
-
-# path of the running script
-path = os.path.abspath(os.path.dirname(__file__))
+import os,sys,datetime,json
 
 # a function to call somthing using os.system
 def cmd(call):
     print call
-    os.system(call)
+    #os.system(call)
 
 # a function which returns the current time in a convenient format
 def getTime():
     return datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
 
+# path of the running script
+path = os.path.abspath(os.path.dirname(__file__))
+
+optionsFile = 'options.json'
+
+# read and parse options.json
+try:
+    optionsString = open(path + '/' + optionsFile).read()
+except IOError:
+    sys.exit('Error options file: ' + optionsFile + ' does not exist.')
+try:
+    options = json.loads(optionsString)
+except ValueError as e:
+    sys.exit('Error with json: ' + e.message + '.')
+
+# sanity checks
+if 'databases' not in options: options['databases'] = []
+if 'directories' not in options: options['directories'] = []
+if 'destination' not in options: sys.exit('Error: destination missing.')
+if 'host' not in options['destination'] or options['destination']['host'] == '': 
+    sys.exit('Error: destination host missing.')
+if 'user' not in options['destination'] or options['destination']['user'] == '':
+    sys.exit('Error: destination user missing.')
+if 'path' not in options['destination'] or options['destination']['path'] == '':
+    sys.exit('Error: destination path missing.')
+
 # prepare destination string
 destination = options['destination']['user'] + '@' + \
     options['destination']['host'] + '::' + \
     options['destination']['path'] + '/'
-
-# sanity check
-if 'databases' not in options: options['databases'] = []
-if 'directories' not in options: options['directories'] = []
-if 'destination' not in options: sys.exit('Error: destination missing.')
 
 if 'mysql' in options['databases'] and options['databases']['mysql']: 
     # prepare mysql database directory
