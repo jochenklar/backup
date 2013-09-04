@@ -31,11 +31,15 @@ def getTime():
 # path of the running script
 path = os.path.abspath(os.path.dirname(__file__))
 
-optionsFile = 'options.json'
+# get the options file from the commandline or take the default
+try:
+    optionsFile = path + '/' + sys.argv[1]
+except IndexError:
+    optionsFile = path + '/' + 'options.json'
 
 # read and parse options.json
 try:
-    optionsString = open(path + '/' + optionsFile).read()
+    optionsString = open(optionsFile).read()
 except IOError:
     sys.exit('Error options file: ' + optionsFile + ' does not exist.')
 try:
