@@ -92,7 +92,7 @@ if 'mysql' in options['databases'] and options['databases']['mysql']:
 
     # dump mysql databases
     for database in options['databases']['mysql']:
-        dump = path + '/mysql/' + database['dbname'] + '.' + getTime() + '.gz'
+        dump = path + '/mysql/' + database['dbname'] + '.' + getTime()
         call = mysqldump + ' ' + database['dbname'] + ' --user=' + database['user'] + ' --password=' + database['password'] + ' > ' + dump 
         cmd(call)
 
@@ -108,7 +108,7 @@ if 'postgres' in options['databases'] and options['databases']['postgres']:
 
     # dump postgres databases
     for database in options['databases']['postgres']:
-        dump = path + '/postgres/' + database['dbname'] + '.' + getTime() + '.gz'
+        dump = path + '/postgres/' + database['dbname'] + '.' + getTime()
         os.putenv('PGPASSWORD', database['password'])
         call = pg_dump + ' ' + database['dbname'] + ' --username=' + database['user'] + ' > ' + dump 
         cmd(call)
