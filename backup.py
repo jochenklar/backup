@@ -39,7 +39,7 @@ import os,sys,datetime,json
 # a function to call somthing using os.system
 def cmd(call):
     print call
-    #os.system(call)
+    os.system(call)
 
 # a function which returns the current time in a convenient format
 def getTime():
