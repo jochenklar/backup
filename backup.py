@@ -127,12 +127,17 @@ if options['directories']:
     # rdiff directories to the destination host
     for directory in options['directories']:
         # specify logfile
-        log = path + '/logs/' + directory['name'] + '.' + getTime() + '.log'
+        if directory['name'] == 'logs':
+             out = '/dev/null'
+             err = '/dev/null'
+        else:
+            out = path + '/logs/' + directory['name'] + '.' + getTime() + '.out'
+            err = path + '/logs/' + directory['name'] + '.' + getTime() + '.err'
 
         # produce call
         call = rdiff + ' -v 5 '
         if 'exclude' in directory:
             for exclude in directory['exclude']:
                 call += '--exclude="' + directory['path'] + '/' + exclude + '" '
-        call += directory['path'] + ' ' + destination + '/' + directory['name'] + '/ &> ' + log
+        call += directory['path'] + ' ' + destination + '/' + directory['name'] + '/ 1> ' + out + ' 2> ' + err
         cmd(call)
