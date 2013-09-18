@@ -65,15 +65,24 @@ except ValueError as e:
     sys.exit('Error with json: ' + e.message + '.')
 
 # sanity checks
-if 'databases' not in options: options['databases'] = []
-if 'directories' not in options: options['directories'] = []
 if 'destination' not in options: sys.exit('Error: destination missing.')
-if 'host' not in options['destination'] or options['destination']['host'] == '': 
-    sys.exit('Error: destination host missing.')
-if 'user' not in options['destination'] or options['destination']['user'] == '':
-    sys.exit('Error: destination user missing.')
-if 'path' not in options['destination'] or options['destination']['path'] == '':
-    sys.exit('Error: destination path missing.')
+for field in ['host','user','path']:
+    if field not in options['destination'] or options['destination'][field] == '': 
+        sys.exit('Error: ' + field + ' missing in destination.')
+
+if 'databases' not in options: options['databases'] = []
+for dbtype in ['mysql','postgres']:
+    if dbtype in options['databases']:
+        for db in options['databases'][dbtype]:
+            for field in ['dbname','user','password']:
+                if field not in db or db[field] == '':
+                    sys.exit('Error: ' + field + ' missing in ' + dbtype + ' database.')
+
+if 'directories' not in options: options['directories'] = []
+for directory in options['directories']:
+    for field in ['name','path']:
+        if field not in directory or directory[field] == '':
+            sys.exit('Error: ' + field +' missing in directory.')
 
 # prepare destination string
 destination = options['destination']['user'] + '@' + \
