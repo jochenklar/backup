@@ -6,6 +6,7 @@ to trigger database dumps for mysql and postgres.
 Prereqesites: linux :)
               python 2.x
               rdiff-backup
+              logrotate
               mysqldump (optional, for mysql)
               pg_dump (optional, for postgres)
 
@@ -34,16 +35,12 @@ mysqldump = 'mysqldump'
 pg_dump   = 'pg_dump'
 
 # include some common python modules
-import os,sys,datetime,json
+import os,sys,json
 
 # a function to call somthing using os.system
 def cmd(call):
     print call
     os.system(call)
-
-# a function which returns the current time in a convenient format
-def getTime():
-    return datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
 
 # path of the running script
 path = os.path.abspath(os.path.dirname(__file__))
@@ -101,7 +98,7 @@ if 'mysql' in options['databases'] and options['databases']['mysql']:
 
     # dump mysql databases
     for database in options['databases']['mysql']:
-        dump = path + '/mysql/' + database['dbname'] + '.' + getTime()
+        dump = path + '/mysql/' + database['dbname'] + '.sql'
         call = mysqldump + ' ' + database['dbname'] + ' --user=' + database['user'] + ' --password=' + database['password'] + ' > ' + dump 
         cmd(call)
 
@@ -117,7 +114,7 @@ if 'postgres' in options['databases'] and options['databases']['postgres']:
 
     # dump postgres databases
     for database in options['databases']['postgres']:
-        dump = path + '/postgres/' + database['dbname'] + '.' + getTime()
+        dump = path + '/postgres/' + database['dbname'] + '.sql'
         os.putenv('PGPASSWORD', database['password'])
         call = pg_dump + ' ' + database['dbname'] + ' --username=' + database['user'] + ' > ' + dump 
         cmd(call)
@@ -140,8 +137,8 @@ if options['directories']:
              out = '/dev/null'
              err = '/dev/null'
         else:
-            out = path + '/logs/' + directory['name'] + '.' + getTime() + '.out'
-            err = path + '/logs/' + directory['name'] + '.' + getTime() + '.err'
+            out = path + '/logs/' + directory['name'] + '.out'
+            err = path + '/logs/' + directory['name'] + '.err'
 
         # produce call
         call = rdiff + ' -v 5 '
