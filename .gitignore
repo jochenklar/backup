@@ -1,4 +1,2 @@
-/logs
-/mysql
-/postgres
-options.json
+!default.json
+*.json
