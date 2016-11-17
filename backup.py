@@ -12,16 +12,17 @@ Usage:        ./backup.py [OPTIONSFILE]
 '''
 
 import argparse
-import json
+import yaml
 import subprocess
 
 parser = argparse.ArgumentParser(description='This script simplifies backups of directories using rsync. Thats it.')
-parser.add_argument('options', help='json file with options')
+parser.add_argument('options', help='yaml file with options')
 parser.add_argument('--debug', action='store_true', help='verbose mode')
+parser.add_argument('--dry', action='store_true', help='dry run')
 
 args = parser.parse_args()
 
-backups = json.loads(open(args.options).read())
+backups = yaml.load(open(args.options).read())
 
 for backup in backups:
     for directory in backup['directories']:
@@ -54,8 +55,12 @@ for backup in backups:
         rsync_command += ' %(user)s@%(host)s:' % backup + directory['path']
         rsync_command += ' %(destination)s' % backup + directory['path']
 
-        if not args.debug:
-            subprocess.call('echo "%s" >> %s' % (rsync_command, backup['log']), shell=True)
+        if args.dry:
+            print mkdir_command
+            print rsync_command
+        else:
+            if not args.debug:
+                subprocess.call('echo "%s" >> %s' % (rsync_command, backup['log']), shell=True)
 
-        subprocess.call(mkdir_command, shell=True)
-        subprocess.call(rsync_command, shell=True)
+            subprocess.call(mkdir_command, shell=True)
+            subprocess.call(rsync_command, shell=True)
