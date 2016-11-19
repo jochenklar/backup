@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser(description='This script simplifies backups of 
 parser.add_argument('options', help='yaml file with options')
 parser.add_argument('--debug', action='store_true', help='verbose mode')
 parser.add_argument('--dry', action='store_true', help='dry run')
+parser.add_argument('--arcfour', action='store_true', help='use --arcfour for ssh')
 
 args = parser.parse_args()
 
@@ -30,6 +31,12 @@ for backup in backups:
         mkdir_command = 'mkdir -p %s%s' % (backup['destination'], directory['path'])
 
         rsync_command = 'rsync -a --delete'
+
+        if args.arcfour:
+            rsync_command += ' -e \'ssh -c arcfour\''
+
+        if args.arcfour:
+            rsync_command += ' -e \'ssh -c arcfour\''
 
         if args.debug:
             rsync_command += ' -v'
@@ -52,7 +59,13 @@ for backup in backups:
             for e in directory['exclude_from']:
                 rsync_command += ' --exclude-from=' + e
 
-        rsync_command += ' %(user)s@%(host)s:' % backup + directory['path']
+        rsync_command += ' '
+        if 'host' in backup:
+            if 'user' in backup:
+                rsync_command += ' %(user)s@%(host)s:' % backup
+            else:
+                rsync_command += ' %(host)s:' % backup
+
         rsync_command += ' %(destination)s' % backup + directory['path']
 
         if args.dry:
