@@ -35,9 +35,6 @@ for backup in backups:
         if args.arcfour:
             rsync_command += ' -e \'ssh -c arcfour\''
 
-        if args.arcfour:
-            rsync_command += ' -e \'ssh -c arcfour\''
-
         if args.debug:
             rsync_command += ' -v'
         else:
@@ -65,7 +62,10 @@ for backup in backups:
                 rsync_command += ' %(user)s@%(host)s:' % backup
             else:
                 rsync_command += ' %(host)s:' % backup
+        else:
+            rsync_command += ' '
 
+        rsync_command += directory['path']
         rsync_command += ' %(destination)s' % backup + directory['path']
 
         if args.dry:
