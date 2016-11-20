@@ -30,15 +30,13 @@ for backup in backups:
 
         mkdir_command = 'mkdir -p %s%s' % (backup['destination'], directory['path'])
 
-        rsync_command = 'rsync -a --delete'
-
-        if args.arcfour:
-            rsync_command += ' -e \'ssh -c arcfour\''
+        rsync_command = 'rsync -a --delete --log-file=%(log)s --log-file-format=""' % backup
 
         if args.debug:
             rsync_command += ' -v'
-        else:
-            rsync_command += ' --log-file=%(log)s --log-file-format=""' % backup
+
+        if args.arcfour:
+            rsync_command += ' -e \'ssh -c arcfour\''
 
         if 'exclude' in backup:
             for e in backup['exclude']:
@@ -56,7 +54,6 @@ for backup in backups:
             for e in directory['exclude_from']:
                 rsync_command += ' --exclude-from=' + e
 
-        rsync_command += ' '
         if 'host' in backup:
             if 'user' in backup:
                 rsync_command += ' %(user)s@%(host)s:' % backup
