@@ -12,8 +12,10 @@ Usage:        ./backup.py [OPTIONSFILE]
 '''
 
 import argparse
-import yaml
+import logging
+import os
 import subprocess
+import yaml
 
 parser = argparse.ArgumentParser(description='This script simplifies backups of directories using rsync. Thats it.')
 parser.add_argument('options', help='yaml file with options')
@@ -26,51 +28,71 @@ args = parser.parse_args()
 backups = yaml.load(open(args.options).read())
 
 for backup in backups:
-    for directory in backup['directories']:
 
-        mkdir_command = 'mkdir -p %s%s' % (backup['destination'], directory['path'])
+    if 'hosts' in backup:
+        hosts = backup['hosts']
+    elif 'host' in backup:
+        hosts = [backup['host']]
+    else:
+        raise Exception('no hosts or host given')
 
-        rsync_command = 'rsync -a --delete --log-file=%(log)s --log-file-format=""' % backup
+    for host in hosts:
+        for directory in backup['directories']:
 
-        if args.debug:
-            rsync_command += ' -v'
+            if not os.path.isabs(directory['path']):
+                raise Exception('path needs to be absolute')
 
-        if args.arcfour:
-            rsync_command += ' -e \'ssh -c arcfour\''
+            path = os.path.normpath(directory['path']) + '/'
+            source = '%s:%s' % (host, path)
+            destination = os.path.join(os.path.normpath(backup['destination']), host) + path
 
-        if 'exclude' in backup:
-            for e in backup['exclude']:
-                rsync_command += ' --exclude=' + e
+            mkdir_command = 'mkdir -p ' + destination
+            rsync_command = 'rsync -a --delete --log-file=%(log)s --log-file-format=""' % backup
 
-        if 'exclude_from' in backup:
-            for e in backup['exclude_from']:
-                rsync_command += ' --exclude-from=' + e
+            if args.debug:
+                rsync_command += ' -v'
 
-        if 'exclude' in directory:
-            for e in directory['exclude']:
-                rsync_command += ' --exclude=' + e
+            if args.arcfour:
+                rsync_command += ' -e \'ssh -c arcfour\''
 
-        if 'exclude_from' in directory:
-            for e in directory['exclude_from']:
-                rsync_command += ' --exclude-from=' + e
+            if 'exclude' in backup:
+                for e in backup['exclude']:
+                    rsync_command += ' --exclude=' + e
 
-        if 'host' in backup:
-            if 'user' in backup:
-                rsync_command += ' %(user)s@%(host)s:' % backup
+            if 'exclude_from' in backup:
+                for e in backup['exclude_from']:
+                    rsync_command += ' --exclude-from=' + e
+
+            if 'exclude' in directory:
+                for e in directory['exclude']:
+                    rsync_command += ' --exclude=' + e
+
+            if 'exclude_from' in directory:
+                for e in directory['exclude_from']:
+                    rsync_command += ' --exclude-from=' + e
+
+            if 'host' in backup:
+                if 'user' in backup:
+                    rsync_command += ' %(user)s@%(host)s:' % backup
+                else:
+                    rsync_command += ' %(host)s:' % backup
             else:
-                rsync_command += ' %(host)s:' % backup
-        else:
-            rsync_command += ' '
+                rsync_command += ' '
 
-        rsync_command += directory['path']
-        rsync_command += ' %(destination)s' % backup + directory['path']
+            rsync_command += '%s %s' % (source, destination)
 
-        if args.dry:
-            print mkdir_command
-            print rsync_command
-        else:
-            if not args.debug:
-                subprocess.call('echo "%s" >> %s' % (rsync_command, backup['log']), shell=True)
+            logging.basicConfig(
+                filename=backup['log'],
+                level=logging.INFO,
+                format='%(asctime)s %(levelname)s %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
 
-            subprocess.call(mkdir_command, shell=True)
-            subprocess.call(rsync_command, shell=True)
+            if args.dry:
+                print mkdir_command
+                print rsync_command
+            else:
+                logging.info('backup started: %s -> %s' % (source, destination))
+                subprocess.call(mkdir_command, shell=True)
+                subprocess.call(rsync_command, shell=True)
+                logging.info('backup finished: %s -> %s' % (source, destination))
