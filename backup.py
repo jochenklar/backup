@@ -90,10 +90,11 @@ for backup in backups:
                 datefmt='%Y-%m-%d %H:%M:%S'
             )
 
-            if args.dry:
+            if args.debug:
                 print mkdir_command
                 print rsync_command
-            else:
+
+            if not args.dry:
                 logging.info('backup started: %s -> %s' % (source, destination))
                 subprocess.call(mkdir_command, shell=True)
                 subprocess.call(rsync_command, shell=True)
