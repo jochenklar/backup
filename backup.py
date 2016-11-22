@@ -64,7 +64,7 @@ for backup in backups:
                 rsync_command += ' -v'
 
             if args.fast:
-                rsync_command += ' -e \'ssh -T -c arcfour\' -o Compression=no -x'
+                rsync_command += ' -e \'ssh -T -c arcfour -o Compression=no -x\''
 
             if 'exclude' in backup:
                 for e in backup['exclude']:
