@@ -29,7 +29,9 @@ backups = yaml.load(open(args.options).read())
 
 for backup in backups:
 
-    if 'hosts' in backup:
+    if 'hosts' in backup and 'host' in backup:
+        raise Exception('hosts and host are mutually exclusive')
+    elif 'hosts' in backup:
         hosts = backup['hosts']
     elif 'host' in backup:
         hosts = [backup['host']]
