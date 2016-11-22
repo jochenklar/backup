@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description='This script simplifies backups of 
 parser.add_argument('options', help='yaml file with options')
 parser.add_argument('--debug', action='store_true', help='verbose mode')
 parser.add_argument('--dry', action='store_true', help='dry run')
-parser.add_argument('--arcfour', action='store_true', help='use --arcfour for ssh')
+parser.add_argument('--fast', action='store_true', help='use --arcfour for ssh and more')
 
 args = parser.parse_args()
 
@@ -45,17 +45,26 @@ for backup in backups:
                 raise Exception('path needs to be absolute')
 
             path = os.path.normpath(directory['path']) + '/'
-            source = '%s:%s' % (host, path)
-            destination = os.path.join(os.path.normpath(backup['destination']), host) + path
+
+            if host:
+                if 'user' in backup:
+                    source = '%s@%s:%s' % (backup['user'], host, path)
+                else:
+                    source = '%s:%s' % (host, path)
+
+                destination = os.path.join(os.path.normpath(backup['destination']), host) + path
+            else:
+                source = path
+                destination = os.path.normpath(backup['destination']) + path
 
             mkdir_command = 'mkdir -p ' + destination
-            rsync_command = 'rsync -a --delete --log-file=%(log)s --log-file-format=""' % backup
+            rsync_command = 'rsync -a --numeric-ids --delete --log-file=%(log)s --log-file-format=""' % backup
 
             if args.debug:
                 rsync_command += ' -v'
 
-            if args.arcfour:
-                rsync_command += ' -e \'ssh -c arcfour\''
+            if args.fast:
+                rsync_command += ' -e \'ssh -T -c arcfour\' -o Compression=no -x'
 
             if 'exclude' in backup:
                 for e in backup['exclude']:
@@ -73,15 +82,7 @@ for backup in backups:
                 for e in directory['exclude_from']:
                     rsync_command += ' --exclude-from=' + e
 
-            if host:
-                if 'user' in backup:
-                    rsync_command += ' %(user)s@%(host)s:' % backup
-                else:
-                    rsync_command += ' %(host)s:' % backup
-            else:
-                rsync_command += ' '
-
-            rsync_command += '%s %s' % (source, destination)
+            rsync_command += ' %s %s' % (source, destination)
 
             logging.basicConfig(
                 filename=backup['log'],
