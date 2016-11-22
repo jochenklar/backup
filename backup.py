@@ -36,7 +36,7 @@ for backup in backups:
     elif 'host' in backup:
         hosts = [backup['host']]
     else:
-        raise Exception('no hosts or host given')
+        hosts = [None]
 
     for host in hosts:
         for directory in backup['directories']:
@@ -73,7 +73,7 @@ for backup in backups:
                 for e in directory['exclude_from']:
                     rsync_command += ' --exclude-from=' + e
 
-            if 'host' in backup:
+            if host:
                 if 'user' in backup:
                     rsync_command += ' %(user)s@%(host)s:' % backup
                 else:
