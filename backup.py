@@ -29,6 +29,17 @@ backups = yaml.load(open(args.options).read())
 
 for backup in backups:
 
+    # prepare logging
+    handler = logging.FileHandler(backup['log'], 'a')
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    for old_handler in logger.handlers[:]:
+        logger.removeHandler(old_handler)
+        logger.addHandler(handler)
+
     if 'hosts' in backup and 'host' in backup:
         raise Exception('hosts and host are mutually exclusive')
     elif 'hosts' in backup:
@@ -83,13 +94,6 @@ for backup in backups:
                     rsync_command += ' --exclude-from=' + e
 
             rsync_command += ' %s %s' % (source, destination)
-
-            logging.basicConfig(
-                filename=backup['log'],
-                level=logging.INFO,
-                format='%(asctime)s %(levelname)s %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            )
 
             if args.debug:
                 print mkdir_command
