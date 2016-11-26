@@ -38,7 +38,7 @@ for backup in backups:
     logger.setLevel(logging.INFO)
     for old_handler in logger.handlers[:]:
         logger.removeHandler(old_handler)
-        logger.addHandler(handler)
+    logger.addHandler(handler)
 
     if 'hosts' in backup and 'host' in backup:
         raise Exception('hosts and host are mutually exclusive')
