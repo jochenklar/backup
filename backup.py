@@ -21,25 +21,32 @@ parser = argparse.ArgumentParser(description='This script simplifies backups of 
 parser.add_argument('options', help='yaml file with options')
 parser.add_argument('--debug', action='store_true', help='verbose mode')
 parser.add_argument('--dry', action='store_true', help='dry run')
-parser.add_argument('--fast', action='store_true', help='use --arcfour for ssh and more')
 
 args = parser.parse_args()
 
-backups = yaml.load(open(args.options).read())
+options = yaml.load(open(args.options).read())
 
-for backup in backups:
+for backup in options['backups']:
 
-    # prepare logging
-    handler = logging.FileHandler(backup['log'], 'a')
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    # prepare log file
+    if 'log' in backup:
+        logfile = backup['log']
+    elif 'log' in options:
+        logfile = options['log']
+    else:
+        logfile = '/var/log/backup/backup.log'
+
+    # prepare logger
+    handler = logging.FileHandler(logfile, 'a')
+    formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     handler.setFormatter(formatter)
-
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     for old_handler in logger.handlers[:]:
         logger.removeHandler(old_handler)
     logger.addHandler(handler)
 
+    # prepare hosts
     if 'hosts' in backup and 'host' in backup:
         raise Exception('hosts and host are mutually exclusive')
     elif 'hosts' in backup:
@@ -47,7 +54,7 @@ for backup in backups:
     elif 'host' in backup:
         hosts = [backup['host']]
     else:
-        hosts = [None]
+        hosts = ['localhost']
 
     for host in hosts:
         for directory in backup['directories']:
@@ -57,7 +64,7 @@ for backup in backups:
 
             path = os.path.normpath(directory['path']) + '/'
 
-            if host:
+            if host != 'localhost':
                 if 'user' in backup:
                     source = '%s@%s:%s' % (backup['user'], host, path)
                 else:
@@ -68,30 +75,44 @@ for backup in backups:
                 source = path
                 destination = os.path.normpath(backup['destination']) + path
 
+            # prepare excludes
+            exclude = []
+            if 'exclude' in directory:
+                exclude += directory['exclude']
+            if 'exclude' in backup:
+                exclude += backup['exclude']
+            if 'exclude' in options:
+                exclude += options['exclude']
+
+            # prepare exclude_from
+            exclude_from = []
+            if 'exclude_from' in directory:
+                exclude_from += backup['exclude_from']
+            if 'exclude_from' in backup:
+                exclude_from += backup['exclude_from']
+            if 'exclude_from' in options:
+                exclude_from += options['exclude_from']
+
+            # prepare rsync log file
+            if 'rsync_log' in backup:
+                rsync_logfile = backup['rsync_log']
+            elif 'rsync_log' in options:
+                rsync_logfile = options['rsync_log']
+            else:
+                rsync_logfile = '/var/log/backup/%s.log' % host
+
+            # prepare commands
             mkdir_command = 'mkdir -p ' + destination
-            rsync_command = 'rsync -a --numeric-ids --delete --log-file=%(log)s --log-file-format=""' % backup
+            rsync_command = 'rsync -a --numeric-ids --delete --log-file="%s" --log-file-format=""' % rsync_logfile
 
             if args.debug:
                 rsync_command += ' -v'
 
-            if args.fast:
-                rsync_command += ' -e \'ssh -T -c arcfour -o Compression=no -x\''
+            for e in exclude:
+                rsync_command += ' --exclude=' + e
 
-            if 'exclude' in backup:
-                for e in backup['exclude']:
-                    rsync_command += ' --exclude=' + e
-
-            if 'exclude_from' in backup:
-                for e in backup['exclude_from']:
-                    rsync_command += ' --exclude-from=' + e
-
-            if 'exclude' in directory:
-                for e in directory['exclude']:
-                    rsync_command += ' --exclude=' + e
-
-            if 'exclude_from' in directory:
-                for e in directory['exclude_from']:
-                    rsync_command += ' --exclude-from=' + e
+            for e in exclude_from:
+                rsync_command += ' --exclude-from=' + e
 
             rsync_command += ' %s %s' % (source, destination)
 
