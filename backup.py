@@ -16,23 +16,27 @@ import logging
 import os
 import subprocess
 import yaml
+import sys
 
 parser = argparse.ArgumentParser(description='This script simplifies backups of directories using rsync. Thats it.')
-parser.add_argument('options', help='yaml file with options')
+parser.add_argument('-c', default='/etc/backup.yml', help='yaml file with configuration')
 parser.add_argument('--debug', action='store_true', help='verbose mode')
 parser.add_argument('--dry', action='store_true', help='dry run')
 
 args = parser.parse_args()
 
-options = yaml.load(open(args.options).read())
+try:
+    config = yaml.load(open(args.c).read())
+except IOError:
+    sys.exit('unable to open config file ' + args.c)
 
-for backup in options['backups']:
+for backup in config['backups']:
 
     # prepare log file
     if 'log' in backup:
         logfile = backup['log']
-    elif 'log' in options:
-        logfile = options['log']
+    elif 'log' in config:
+        logfile = config['log']
     else:
         logfile = '/var/log/backup/backup.log'
 
@@ -81,8 +85,8 @@ for backup in options['backups']:
                 exclude += directory['exclude']
             if 'exclude' in backup:
                 exclude += backup['exclude']
-            if 'exclude' in options:
-                exclude += options['exclude']
+            if 'exclude' in config:
+                exclude += config['exclude']
 
             # prepare exclude_from
             exclude_from = []
@@ -90,14 +94,14 @@ for backup in options['backups']:
                 exclude_from += backup['exclude_from']
             if 'exclude_from' in backup:
                 exclude_from += backup['exclude_from']
-            if 'exclude_from' in options:
-                exclude_from += options['exclude_from']
+            if 'exclude_from' in config:
+                exclude_from += config['exclude_from']
 
             # prepare rsync log file
             if 'rsync_log' in backup:
                 rsync_logfile = backup['rsync_log']
-            elif 'rsync_log' in options:
-                rsync_logfile = options['rsync_log']
+            elif 'rsync_log' in config:
+                rsync_logfile = config['rsync_log']
             else:
                 rsync_logfile = '/var/log/backup/%s.log' % host
 
