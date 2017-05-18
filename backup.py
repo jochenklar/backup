@@ -130,6 +130,9 @@ for backup in config['backups']:
 
                 if not args.dry:
                     logging.info('backup started: %s -> %s' % (source, destination))
-                    subprocess.call(mkdir_command, shell=True)
-                    subprocess.call(rsync_command, shell=True)
-                    logging.info('backup finished: %s -> %s' % (source, destination))
+                    try:
+                        subprocess.check_call(mkdir_command, shell=True)
+                        subprocess.check_call(rsync_command, shell=True)
+                        logging.info('backup finished: %s -> %s' % (source, destination))
+                    except:
+                        logging.info('backup failed: %s -> %s' % (source, destination))
