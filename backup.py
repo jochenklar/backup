@@ -134,5 +134,5 @@ for backup in config['backups']:
                         subprocess.check_call(mkdir_command, shell=True)
                         subprocess.check_call(rsync_command, shell=True)
                         logging.info('backup finished: %s -> %s' % (source, destination))
-                    except:
-                        logging.info('backup failed: %s -> %s' % (source, destination))
+                    except subprocess.CalledProcessError as e:
+                        logging.info('backup error (%i): %s -> %s' % (e.returncode, source, destination))
