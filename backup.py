@@ -34,7 +34,22 @@ except IOError:
 
 for backup in config['backups']:
 
-    if not args.host or backup['host'] in args.host:
+    # prepare hosts
+    if 'hosts' in backup and 'host' in backup:
+        raise Exception('hosts and host are mutually exclusive')
+    elif 'hosts' in backup:
+        hosts = backup['hosts']
+    elif 'host' in backup:
+        hosts = [backup['host']]
+    else:
+        hosts = ['localhost']
+
+    # filter hosts
+    if args.host:
+        hosts = [host for host in hosts if host in args.host]
+
+    # only continue if there are any hosts
+    if hosts:
 
         # prepare log file
         if 'log' in backup:
@@ -53,16 +68,6 @@ for backup in config['backups']:
         for old_handler in logger.handlers[:]:
             logger.removeHandler(old_handler)
         logger.addHandler(handler)
-
-        # prepare hosts
-        if 'hosts' in backup and 'host' in backup:
-            raise Exception('hosts and host are mutually exclusive')
-        elif 'hosts' in backup:
-            hosts = backup['hosts']
-        elif 'host' in backup:
-            hosts = [backup['host']]
-        else:
-            hosts = ['localhost']
 
         for host in hosts:
             for directory in backup['directories']:
@@ -125,8 +130,8 @@ for backup in config['backups']:
                 rsync_command += ' %s %s' % (source, destination)
 
                 if args.debug:
-                    print mkdir_command
-                    print rsync_command
+                    print(mkdir_command)
+                    print(rsync_command)
 
                 if not args.dry:
                     logging.info('backup started: %s -> %s' % (source, destination))
