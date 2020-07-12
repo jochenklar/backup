@@ -15,8 +15,9 @@ import argparse
 import logging
 import os
 import subprocess
-import yaml
 import sys
+
+import yaml
 
 parser = argparse.ArgumentParser(description='This script simplifies backups of directories using rsync. Thats it.')
 parser.add_argument('host', nargs='*', help='list of hosts to backup [default: all]')
@@ -115,29 +116,29 @@ for backup in config['backups']:
                     rsync_logfile = '/var/log/backup/%s.log' % host
 
                 # prepare commands
-                mkdir_command = 'mkdir -p ' + destination
-                rsync_command = 'rsync -a --numeric-ids --delete --log-file="%s" --log-file-format=""' % rsync_logfile
+                mkdir_args = ['mkdir', '-p', destination]
+                rsync_args = ['rsync', '-a', '--numeric-ids', '--delete', '--log-file="{}"'.format(rsync_logfile), '--log-file-format=""']
 
                 if args.debug:
-                    rsync_command += ' -v'
+                    rsync_args.append('-v')
 
                 for e in exclude:
-                    rsync_command += ' --exclude=' + e
+                    rsync_args.append('--exclude={}'.format(e))
 
                 for e in exclude_from:
-                    rsync_command += ' --exclude-from=' + e
+                    rsync_args.append('--exclude-from={}'.format(e))
 
-                rsync_command += ' %s %s' % (source, destination)
+                rsync_args.append(source, destination)
 
                 if args.debug:
-                    print(mkdir_command)
-                    print(rsync_command)
+                    print(' '.join(mkdir_args))
+                    print(' '.join(rsync_args))
 
                 if not args.dry:
                     logging.info('backup started: %s -> %s' % (source, destination))
                     try:
-                        subprocess.check_call(mkdir_command, shell=True)
-                        subprocess.check_call(rsync_command, shell=True)
+                        subprocess.check_call(mkdir_args)
+                        subprocess.check_call(rsync_args)
                         logging.info('backup finished: %s -> %s' % (source, destination))
                     except subprocess.CalledProcessError as e:
                         logging.info('backup error (%i): %s -> %s' % (e.returncode, source, destination))
