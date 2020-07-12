@@ -128,7 +128,7 @@ for backup in config['backups']:
                 for e in exclude_from:
                     rsync_args.append('--exclude-from={}'.format(e))
 
-                rsync_args.append(source, destination)
+                rsync_args += [source, destination]
 
                 if args.debug:
                     print(' '.join(mkdir_args))
