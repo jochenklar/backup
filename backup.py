@@ -117,7 +117,7 @@ for backup in config['backups']:
 
                 # prepare commands
                 mkdir_args = ['mkdir', '-p', destination]
-                rsync_args = ['rsync', '-a', '--numeric-ids', '--delete', '--log-file="{}"'.format(rsync_logfile), '--log-file-format=""']
+                rsync_args = ['rsync', '-a', '--numeric-ids', '--delete', '--log-file={}'.format(rsync_logfile), '--log-file-format=""']
 
                 if args.debug:
                     rsync_args.append('-v')
